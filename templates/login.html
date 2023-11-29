@@ -105,7 +105,7 @@
             }
         }
 
-        fetch('http://127.0.0.1:4500/login', requestOptions)
+        fetch('http://127.0.0.1:4500/process_login', requestOptions)
         .then(
             res => {return res.json()}
         )
@@ -117,8 +117,8 @@
                 localStorage.setItem('token', resp.token);
                 localStorage.setItem('username', resp.username);
                 localStorage.setItem('id', resp.id);
-                document.getElementById("message").innerHTML = 'Bienvenido ' + resp.username;
-                window.location.href = "dashboard.html";
+                //document.getElementById("message").innerHTML = 'Bienvenido ' + resp.username;
+                window.location.href = "/index";
 
             }
             else{

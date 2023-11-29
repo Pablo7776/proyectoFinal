@@ -39,6 +39,20 @@
     </form>
 
     <script>
+// hacer checkeo de token
+
+        // window.onload = function(){
+        //         const token = localStorage.getItem('token');
+        //         if(token){
+        //             const username = localStorage.getItem('username');
+        //             const id = localStorage.getItem('id');
+        //             document.getElementById("username").innerHTML = username;
+        //         }
+        //         else{
+        //             window.location.href = "login.html";
+        //         }
+        // }
+        const id = localStorage.getItem('id');
         function createClient() {
             // Obtener los valores del formulario
             const name = document.getElementById('name').value;
@@ -47,7 +61,7 @@
             // Crear objeto de cliente
             const client = {
                 name: name,
-                id_user: 2
+                id_user: id
 
             };
 

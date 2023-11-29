@@ -1,4 +1,5 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, redirect, send_from_directory, render_template, url_for, session
+
 from flask_mysqldb import MySQL
 from person import Person
 from client import Client
@@ -6,28 +7,98 @@ import jwt
 import datetime
 from functools import wraps
 from flask_cors import CORS
+from os import urandom
 
 
 app = Flask(__name__)
 CORS(app)
 
+
+#Mysql Connection
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'user_api_flask'
 app.config['MYSQL_PASSWORD'] = '123456'
 app.config['MYSQL_DB'] = 'db_api_flask'
 
-app.config['SECRET_KEY'] = 'app_123'
+"""La clave secreta es crucial en el manejo de sesiones y la seguridad en general en aplicaciones web. En Flask, se utiliza para firmar cookies y otros datos relacionados con la seguridad. La firma de cookies es un mecanismo que permite a la aplicación verificar la integridad de los datos almacenados en las cookies del usuario."""
+app.config['SECRET_KEY'] = urandom(24)
 
 mysql = MySQL(app)
 
+# @app.route('/')
+# def index():
+#     #return jsonify({"massage": "API desarrollada con flask"})
+#     #return redirect('/login.html')
+#     return send_from_directory('.', 'login.html')
+
+
+####################################################################################
+def token_required(func): #chequeo!!!
+    @wraps(func)
+    def decorated(*args, **kwargs):
+        print(kwargs)
+        token = None
+
+        if 'token' in session:  # Cambiado a buscar el token en la sesión de Flask
+            token = session['token']
+
+ 
+        if not token:
+            return jsonify({
+                "message": "Falta el token"
+            }), 401
+        
+
+
+        user_id = None
+
+        if 'user-id' in session:
+            user_id = session['user-id']
+
+        if not user_id:
+            return jsonify({"message": "Falta el usuario"}), 401
+        
+        try:
+            data = jwt.decode(token, app.config['SECRET_KEY'], algorithms = ['HS256'])
+
+            token_id = data['id']
+
+
+
+            if int(user_id) != int(token_id):
+                return jsonify({"message": "Error de id"}), 401
+
+        except Exception as e:
+            print(e)
+            return jsonify({"message": str(e)}), 401
+
+        return func(*args, **kwargs)
+    return decorated
+####################################################################################
+
+
 @app.route('/')
-def index():
-    return jsonify({"massage": "API desarrollada con flask"})
 
+def home():
+    # Aquí puedes verificar si el usuario está autenticado
+    # Si no está autenticado, redirige a la página de login
+    # Puedes implementar tu lógica de autenticación aquí
 
+    # Por ahora, simplemente redirigimos a login.html para demostrar el concepto
+    if 'token' not in session:
+        return redirect(url_for('login'))
 
-@app.route('/login', methods = ['POST'])
+    # El usuario está autenticado, redirige a la página principal
+    return redirect(url_for('index'))
+
+# Ruta para el login
+@app.route('/login', methods=['GET'])
 def login():
+    return render_template('login.html')
+
+
+@app.route('/process_login', methods = ['POST'])
+def process_login():
     auth = request.authorization
     print(auth)
 
@@ -48,48 +119,23 @@ def login():
                         'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=100)                 
                         
                         }, app.config['SECRET_KEY'])
+    
+    # Almacena el token en la sesión
+    session['token'] = token
+    session['user-id'] = str(row[0])
 
-    return jsonify({"token": token, "username": auth.username, "id": row[0]})
+    return jsonify({"token": session['token'], "username": auth.username, "id": row[0]})
 
 
 
-def token_required(func): #chequeo!!!
-    @wraps(func)
-    def decorated(*args, **kwargs):
-        print(kwargs)
-        token = None
 
-        if 'x-access-token' in request.headers:
-            token = request.headers['x-access-token']
 
- 
-        if not token:
-            return jsonify({
-                "message": "Falta el token"
-            }), 401
-        
-        user_id = None
+@app.route('/index')
+@token_required #el que se identifica es el que generó el token
+def index():
+    return render_template('index.html')
 
-        if 'user-id' in request.headers:
-            user_id = request.headers['user-id']
 
-        if not user_id:
-            return jsonify({"message": "Falta el usuario"}), 401
-        
-        try:
-            data = jwt.decode(token, app.config['SECRET_KEY'], algorithms = ['HS256'])
-
-            token_id = data['id']
-
-            if int(user_id) != int(token_id):
-                return jsonify({"message": "Error de id"}), 401
-
-        except Exception as e:
-            print(e)
-            return jsonify({"message": str(e)}), 401
-
-        return func(*args, **kwargs)
-    return decorated
 
 
 def client_resource(func): #chequeo!!!
