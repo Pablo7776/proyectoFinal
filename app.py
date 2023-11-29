@@ -177,6 +177,36 @@ def create_person():
     return jsonify({"name": name, "surname": surname, "dni": dni, "email": email, "id": id })
 
 
+@app.route('/cliente', methods = ['POST'])
+def create_cliente():
+    name = request.get_json()["name"]
+    id_user = request.get_json()["id_user"]
+
+
+    cur = mysql.connection.cursor()
+    """Control si existe el email indicado"""
+
+    cur.execute('SELECT * FROM client WHERE name = "{0}"'.format(name)) #el profe lo hace de otra manera , ver 1:54 clase 8
+    row = cur.fetchone()
+
+    if row:
+        return jsonify({"message": "email ya registrado"})
+
+    """ acceso a BD -> INSERT INTO """
+    
+    cur.execute("INSERT INTO client (name, id_user) VALUES (%s, %s)", (name , id_user))
+    mysql.connection.commit()
+
+    """ obtener el id del registro creado"""
+    cur.execute('SELECT LAST_INSERT_ID()')
+    row = cur.fetchone()
+    print(row[0])
+    id = row[0]
+
+    return jsonify({"name": name, "id": id })
+
+
+
 @app.route('/persons/<int:id>', methods = ['GET'])
 def get_person_by_id(id):
     cur = mysql.connection.cursor()
@@ -189,7 +219,7 @@ def get_person_by_id(id):
         return jsonify(objPerson.to_json())
     return jsonify({"message": "id not found"})
 
-@app.route('/persons/<int:id>', methods = ['PUT'])
+@app.route('/person/<int:id>', methods = ['PUT'])
 def uptate_person(id):
     name = request.get_json()["name"]
     surname = request.get_json()["surname"] 
@@ -200,6 +230,16 @@ def uptate_person(id):
     cur.execute('UPDATE person SET name = %s, surname = %s, dni = %s, email = %s WHERE id = %s', (name, surname, dni, email, id))
     mysql.connection.commit()
     return jsonify({ "id":id, "name": name, "surname": surname, "dni": dni, "email": email})
+
+
+@app.route('/client/<int:id>', methods = ['PUT'])
+def uptate_cliente(id):
+    name = request.get_json()["name"]
+    """ UPDATE SET ... WHERE ... """
+    cur = mysql.connection.cursor()
+    cur.execute('UPDATE client SET name = %s WHERE id = %s', (name, id))
+    mysql.connection.commit()
+    return jsonify({ "id":id, "name": name})
 
 @app.route('/persons/<int:id>', methods = ['DELETE']) # Esto es un borrado físico, buscar el borrado lógico
 def remove_person(id):

@@ -4,13 +4,67 @@
         <meta charset='utf-8'>
         <title>Dashboard </title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        <style>
+            *{
+                box-sizing: border-box;
+            }
+            table, th, td{
+                border-collapse: collapse;
+                border: 1px solid black;
+                padding: 3px 10px;
+            }
+            .editing{
+                background-color: aqua;
+            }
+            .load{
+                width: 16px;
+                height: 16px;
+                border-radius: 50%;
+                display: none;
+            }
+            .loading{
+                display: inline-block;
+                border: 5px solid grey;
+                border-top: 5px solid blue;
+                animation-name: rot;
+                animation-duration: 1s;
+                animation-iteration-count: infinite;
+            }
+            @keyframes rot {
+                from{
+                    transform: rotate(0);
+                }
+                to{
+                    transform: rotate(360deg);
+                }
+                
+            }
+        </style>
     </head>
     
     <body>
         <h1>Bienvenido <span id="username"></span></h1>
 
         <button onclick="cargarClientes()"> Cargar clientes </button>
+        <hr>
+        <h2> Lista de personas </h2>
+        <table>
+            <thead>
+                <tr>
+                    <th> id </th>
+                    <th> Nombre </th>
+                    <th> Apellido </th>
+                    <th> email </th>
+                    <th> DNI </th>
+                    <th> Acciones </th>
+                </tr>
+            </thead>
+            <tbody id="all-persons">
 
+            </tbody>
+        </table>
+        <hr>
         <script>
             window.onload = function(){
                 const token = localStorage.getItem('token');
@@ -42,22 +96,128 @@
                 .then(
                     resp => {return resp.json()}
                 )
+                // .then(
+                //     resp =>{
+                //         console.log(resp);
+
+                //         resp.forEach(cliente => {
+                //             mostrarCliente(cliente);
+                //         });
+                //     }
+                // )
+
                 .then(
-                    resp =>{
-                        console.log(resp);
-
-                        resp.forEach(cliente => {
-                            mostrarCliente(cliente);
-                        });
-                    }
-                )
+                        (resp) => {
+                            /* console.log("Datos en formato JSON: ",data) */
+                            console.log(resp)
+                            const tableBody = document.getElementById('all-persons')
+                            
+                            let list = ``;
+                            resp.forEach(person => {
+                                let fila = `<tr id="${person.id}">  
+                                            <td> ${person.id} </td>
+                                            <td> ${person.name}</td>
+                                            <td> ${person.surname}</td>
+                                            <td> ${person.email}</td>
+                                            <td> ${person.dni}</td>
+                                            <td>
+                                                <button onclick="editar(${person.id})"> Editar </button>
+                                                <button onclick="eliminar(${person.id})"> Eliminar </button>
+                                            </td>
+                                        </tr>` //solo usar estas comillas!!
+                                        list += fila;
+                            });
+                            tableBody.innerHTML = list;
+                        }
+                    )
+                    .catch( (error) => { console.log("Promesa rechazada por" , error)})
+                    .finally( () => { 
+                        console.log("Promesa finalizada (resuelta o rechazada)")
+                        //stopLoading()
+                    })
 
             }
 
-            function mostrarCliente(cliente){
-                console.log(cliente.name);
+            // function mostrarCliente(cliente){
+            //     console.log(cliente.name);
+            // }
+
+
+            function editar(id){
+                console.log('Editando por id:', id)
+                let row = document.getElementById(id);
+                console.log(row.children);
+
+                for (let i=1; i <= 4; i++){
+                    row.children[i].contentEditable = true;
+                    row.children[i].classList.toggle('editing'); // cambia el color de fondo
+                }
+
+                row.children[5].innerHTML = `<td>
+                                                <button onclick="guardar(${id})"> Guardar </button>
+                                                <button onclick="eliminar(${id})" distable> Eliminar </button>
+                                            </td>`
+
+            }
+            function eliminar(id){
+                
             }
 
+            function guardar(id){
+                let row = document.getElementById(id);
+                for (let i=1; i <= 4; i++){
+                    row.children[i].contentEditable = false;
+                    row.children[i].classList.toggle('editing');
+                }
+
+                row.children[5].innerHTML = `<td>
+                                                <button onclick="editar(${id})"> Editar </button>
+                                                <button onclick="eliminar(${id})" > Eliminar </button>
+                                            </td>`
+
+                const datos = row.children;
+                
+                const person = {
+                    name: datos[1].textContent,
+                    // surname: datos[2].textContent,
+                    // email: datos[3].textContent,
+                    // dni: datos[4].textContent,
+                } 
+                console.log(person)
+
+                // const id = localStorage.getItem('id');
+                const token = localStorage.getItem('token');
+
+                const requestOptions = {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-access-token' : token,
+                        'user-id' : id,
+                    },
+                    body : JSON.stringify(person) 
+
+                    
+                }
+                // startLoading();
+                fetch(`http://127.0.0.1:4500/client/${id}`, requestOptions) // te actualiza los datos en la tabla
+                    .then( resp => {return resp.json()} )
+                    .then (
+                        data => {
+                            console.log(data);
+                            datos[1].innerHTML = data.name;
+                            // datos[2].innerHTML = data.surname;
+                            // datos[3].innerHTML = data.email;
+                            // datos[4].innerHTML = data.dni;
+                        }
+                    )
+                    .catch( (error) => { console.log("Promesa rechazada por" , error)})
+                    .finally( () => { 
+                        console.log("Promesa finalizada (resuelta o rechazada)");
+                        //stopLoading()
+                    })
+
+                }
         </script>
 
 

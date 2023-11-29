@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alta de Cliente</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        form {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        label, input {
+            display: block;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Alta de Cliente</h2>
+    
+    <form id="clientForm">
+        <label for="name">Nombre:</label>
+        <input type="text" id="name" required>
+
+
+        <button type="button" onclick="createClient()">Crear Cliente</button>
+    </form>
+
+    <script>
+        function createClient() {
+            // Obtener los valores del formulario
+            const name = document.getElementById('name').value;
+
+
+            // Crear objeto de cliente
+            const client = {
+                name: name,
+                id_user: 2
+
+            };
+
+            // Enviar la solicitud al servidor (puedes usar fetch o una librería como axios)
+            // Aquí deberías hacer la solicitud POST al servidor con la información del cliente
+            // Por ejemplo, usando fetch:
+            fetch('http://127.0.0.1:4500/cliente', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(client)
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Manejar la respuesta del servidor (puede ser un mensaje de éxito o error)
+                console.log(data);
+                alert('Cliente creado exitosamente');
+            })
+            .catch(error => {
+                // Manejar errores de la solicitud
+                console.error('Error:', error);
+                alert('Error al crear el cliente');
+            });
+        }
+    </script>
+
+</body>
+</html>
