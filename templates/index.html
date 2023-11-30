@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -7,6 +7,58 @@
 </head>
 <body>
     <h1>Bienvenido a la página de inicio</h1>
-    <!-- Aquí puedes agregar más contenido HTML según tus necesidades -->
+
 </body>
-</html>
+</html> -->
+
+{% extends 'layout.html' %}
+
+{% block body %}
+
+{% with messages = get_flashed_messages() %}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                <p>{{ message }}</p>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<form action="/agregar_cliente" method="POST">
+<input type="text" name="nombre" placeholder="Nombre">
+<input type="text" name="apellido" placeholder="Apellido">
+<input type="text" name="dni" placeholder="Dni">
+<button type="submit">
+    Guardar
+</button>
+</form>
+
+<table>
+    <thead>
+        <tr>
+            <td>ID</td>
+            <td>NOMBRE</td>
+            <td>USUARIO</td>
+            <td>OPERACIONES</td>
+            
+        </tr>
+    </thead>
+
+<tbody>
+    {% for contact in contacts %}
+        <tr>
+            <td>{{ contact.0 }}</td>
+            <td>{{ contact.1 }}</td>
+            <td>{{ contact.2 }}</td>
+            <td>
+                <a href="/editar/{{contact.0}}">Editar</a>
+                <a href="/borrar/{{contact.0}}">Borrar</a>
+            </td>
+        </tr>
+    {% endfor %}
+</tbody>
+</table>
+
+{% endblock %}

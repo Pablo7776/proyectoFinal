@@ -1,27 +1,37 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
+
+{% extends 'layout.html' %}
+
+{% block body %}
+     <style>
+        /* body {
+
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-        }
+        } */
 
-        .login-container {
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        /* .login-container {
+
             padding: 20px;
             width: 300px;
-        }
+        } */
+        body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh; /* Establece la altura del cuerpo al 100% del viewport height */
+
+    margin: 0; /* Elimina el margen predeterminado del cuerpo */
+}
+
+.login-container {
+    padding: 20px;
+    width: 500px;
+    border: 1px solid #ccc; /* Añade un borde para visualización */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Añade una sombra para visualización */
+    margin-left: 400px;
+}
 
         .login-container h2 {
             text-align: center;
@@ -62,9 +72,14 @@
             color: #ff0000;
             text-align: center;
         }
+
+        .ocultar-nav .navbar {
+    display: none;
+}
+
     </style>
 </head>
-<body>
+<body class="ocultar-nav">
 
 
     <div class="login-container">
@@ -79,7 +94,7 @@
             <button type="button" onclick="iniciarSesion()">Login</button>
         </form>
         <p id="message"></p>
-    </div>
+    </div> 
 
 
 <script>
@@ -129,5 +144,4 @@
     }
 </script>    
 
-</body>
-</html>
+{% endblock %}

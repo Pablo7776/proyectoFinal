@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, redirect, send_from_directory, render_template, url_for, session
+from flask import Flask, jsonify, request, redirect, send_from_directory, render_template, url_for, session, flash
 
 from flask_mysqldb import MySQL
 from person import Person
@@ -133,7 +133,11 @@ def process_login():
 @app.route('/index')
 @token_required #el que se identifica es el que generó el token
 def index():
-    return render_template('index.html')
+    cur = mysql.connection.cursor()
+    cur.execute('SELECT * FROM client')
+    data = cur.fetchall()
+    #print(data)
+    return render_template('index.html', contacts = data)
 
 
 
@@ -175,6 +179,76 @@ def user_resources(func): #chequeo!!!
 @token_required
 def test(id):
     return jsonify({"message": "funcion test"})
+
+
+@app.route('/agregar_cliente', methods = ['POST'])
+def agregar_cliente():
+    if request.method == 'POST':
+       nombre = request.form['nombre']
+       id_user = 2 #despuesa cambiar por id del usuario
+       cur = mysql.connection.cursor()
+       cur.execute('INSERT INTO client (name, id_user) VALUES (%s,%s)', (nombre, id_user))
+       mysql.connection.commit()
+       flash('Contacto agregado satisfactoriamente')
+       return redirect(url_for('index'))
+
+
+@app.route('/borrar/<string:id>')
+def borrar_cliente(id):
+    cur = mysql.connection.cursor()
+    cur.execute('DELETE FROM client WHERE id = {0}'.format(id))
+    mysql.connection.commit()
+    flash('Cliente borrado')
+    return redirect(url_for('index'))
+
+@app.route('/editar/<id>')
+def get_cliente(id):
+    cur = mysql.connection.cursor()
+    cur.execute('SELECT * FROM client WHERE id = %s', (id))
+    data = cur.fetchall()
+    print(data[0])
+    return render_template('editar-contactos.html', contact = data[0])
+
+
+@app.route('/update/<id>', methods = ['POST'])
+def update_contact(id):
+    if request.method == 'POST':
+        nombre = request.form['nombre']
+        usuario = request.form['usuario']
+        cur = mysql.connection.cursor()
+        cur.execute("""
+            UPDATE client
+            SET name = %s,
+                id_user = %s
+            WHERE id = %s
+        """, (nombre, usuario, id))
+        mysql.connection.commit()
+        flash('contacto actualizado')
+        return redirect(url_for('index'))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
