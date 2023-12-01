@@ -26,27 +26,28 @@
     {% endif %}
 {% endwith %}
 
-<form action="/agregar_cliente" method="POST">
+<!-- <form action="/agregar_cliente" method="POST"> -->
+<form>
 <input type="text" name="nombre" placeholder="Nombre">
 <input type="text" name="apellido" placeholder="Apellido">
 <input type="text" name="dni" placeholder="Dni">
-<button type="submit">
+<button onclick="guardarClientes()">
     Guardar
 </button>
 </form>
-
-<table>
+<button onclick="cargarClientes()"> Cargar clientes </button>
+<table class="table table-dark table-striped-columns">
     <thead>
         <tr>
             <td>ID</td>
             <td>NOMBRE</td>
-            <td>USUARIO</td>
+            <td>USER_ID</td>
             <td>OPERACIONES</td>
             
         </tr>
     </thead>
 
-<tbody>
+<!-- <tbody>
     {% for contact in contacts %}
         <tr>
             <td>{{ contact.0 }}</td>
@@ -58,7 +59,134 @@
             </td>
         </tr>
     {% endfor %}
+</tbody> -->
+
+<tbody id="all-persons">
+
 </tbody>
 </table>
+<script>
+    window.onload = function(){
+        const token = localStorage.getItem('token');
+        if(token){
+            const username = localStorage.getItem('username');
+            const id = localStorage.getItem('id');
+            // document.getElementById("username").innerHTML = username;
+        }
+        else{
+            window.location.href = "login.html";
+        }
+    }
+
+    function cargarClientes(){
+
+                const id = localStorage.getItem('id');
+                const token = localStorage.getItem('token');
+                // console.log('User ID:', id);
+
+                const requestOptions = {
+                    method : 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-access-token' : token,
+                        'user-id' : id,
+
+                    }
+                }
+
+                fetch( `http://127.0.0.1:4500/user/${id}/client`, requestOptions)
+                .then(
+                    resp => {return resp.json()}
+                )
+                // .then(
+                //     resp =>{
+                //         console.log(resp);
+
+                //         resp.forEach(cliente => {
+                //             mostrarCliente(cliente);
+                //         });
+                //     }
+                // )
+
+                .then(
+                        (resp) => {
+                            /* console.log("Datos en formato JSON: ",data) */
+                            console.log(resp)
+                            const tableBody = document.getElementById('all-persons')
+                            
+                            let list = ``;
+                            resp.forEach(person => {
+                                let fila = `<tr id="${person.id}">  
+                                            <td> ${person.id} </td>
+                                            <td> ${person.name}</td>
+                                            <td> ${person.id_user}</td>
+
+                                            <td>
+                                                <button onclick="editar(${person.id})"> Editar </button>
+                                                <button onclick="eliminar(${person.id})"> Eliminar </button>
+                                            </td>
+                                        </tr>` //solo usar estas comillas!!
+                                        list += fila;
+                            });
+                            tableBody.innerHTML = list;
+                        }
+                    )
+                    .catch( (error) => { console.log("Promesa rechazada por" , error)})
+                    .finally( () => { 
+                        console.log("Promesa finalizada (resuelta o rechazada)")
+                        //stopLoading()
+                    })
+
+            
+
+    }
+
+
+
+
+    function guardarClientes() {
+    const id = localStorage.getItem('id');
+    const token = localStorage.getItem('token');
+
+    // Obtener los valores de los campos del formulario
+    const nombre = document.querySelector('input[name="nombre"]').value;
+    const apellido = document.querySelector('input[name="apellido"]').value;
+    const dni = document.querySelector('input[name="dni"]').value;
+
+    const requestOptions = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-access-token': token,
+            'user-id': id,
+        },
+        // Aquí debes incluir los datos del cliente en el cuerpo de la solicitud
+        // Por ejemplo, si tienes un formulario con campos nombre, apellido, etc.
+        body: JSON.stringify({
+            name: nombre,
+            apellido: 'apellido',
+            id_user: id
+            // Agrega otros campos según sea necesario
+        }),
+    };
+
+    fetch(`http://127.0.0.1:4500/cliente`, requestOptions)
+        .then(
+            resp => resp.json()
+        )
+        .then(
+            (resp) => {
+                console.log(resp);
+                // Aquí puedes manejar la respuesta del servidor después de guardar el cliente
+            }
+        )
+        .catch((error) => {
+            console.log("Promesa rechazada por", error);
+        })
+        .finally(() => {
+            console.log("Promesa finalizada (resuelta o rechazada)");
+        });
+}
+</script>
 
 {% endblock %}

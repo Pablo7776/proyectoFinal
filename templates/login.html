@@ -97,51 +97,49 @@
     </div> 
 
 
-<script>
-
-    window.onload = function(){
-        localStorage.removeItem('token');
-        localStorage.removeItem('username');
-        localStorage.removeItem('id');
-    }
-
-    function iniciarSesion(){
-
-        document.getElementById("message").innerHTML = '';
-
-        const username = document.getElementById('in-username').value;
-        const password = document.getElementById('in-password').value;
-
-        const requestOptions = {
-            method : 'POST',
-            headers:{
-                'Content-Type' : 'application/json',
-                'Authorization' : 'Basic ' + btoa(username + ":" + password) 
-            }
+    <script>
+        window.onload = function(){
+            localStorage.removeItem('token');
+            localStorage.removeItem('username');
+            localStorage.removeItem('id');
+            
+            // Agregar el evento al formulario
+            document.getElementById("login-form").addEventListener("keypress", function(event) {
+                if (event.key === "Enter") {
+                    iniciarSesion(); // Llama a la función iniciarSesion() cuando se presiona Enter
+                }
+            });
         }
-
-        fetch('http://127.0.0.1:4500/process_login', requestOptions)
-        .then(
-            res => {return res.json()}
-        )
-        .then(
-            resp => {
-            console.log(resp)
-            if(resp.token){
-
-                localStorage.setItem('token', resp.token);
-                localStorage.setItem('username', resp.username);
-                localStorage.setItem('id', resp.id);
-                //document.getElementById("message").innerHTML = 'Bienvenido ' + resp.username;
-                window.location.href = "/index";
-
+    
+        function iniciarSesion() {
+            document.getElementById("message").innerHTML = '';
+    
+            const username = document.getElementById('in-username').value;
+            const password = document.getElementById('in-password').value;
+    
+            const requestOptions = {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Basic ' + btoa(username + ":" + password)
+                }
             }
-            else{
-                document.getElementById("message").innerHTML = resp.message;
-            }
-            }
-        )
-    }
-</script>    
+    
+            fetch('http://127.0.0.1:4500/process_login', requestOptions)
+            .then(res => { return res.json() })
+            .then(resp => {
+                console.log(resp)
+                if (resp.token) {
+                    localStorage.setItem('token', resp.token);
+                    localStorage.setItem('username', resp.username);
+                    localStorage.setItem('id', resp.id);
+                    window.location.href = "/index";
+                } else {
+                    document.getElementById("message").innerHTML = resp.message;
+                }
+            })
+        }
+    </script>
+    
 
 {% endblock %}

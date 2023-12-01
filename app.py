@@ -186,6 +186,7 @@ def agregar_cliente():
     if request.method == 'POST':
        nombre = request.form['nombre']
        id_user = 2 #despuesa cambiar por id del usuario
+
        cur = mysql.connection.cursor()
        cur.execute('INSERT INTO client (name, id_user) VALUES (%s,%s)', (nombre, id_user))
        mysql.connection.commit()
@@ -204,7 +205,7 @@ def borrar_cliente(id):
 @app.route('/editar/<id>')
 def get_cliente(id):
     cur = mysql.connection.cursor()
-    cur.execute('SELECT * FROM client WHERE id = %s', (id))
+    cur.execute('SELECT * FROM client WHERE id = %s', (id,))
     data = cur.fetchall()
     print(data[0])
     return render_template('editar-contactos.html', contact = data[0])
@@ -304,13 +305,13 @@ def create_cliente():
 
 
     cur = mysql.connection.cursor()
-    """Control si existe el email indicado"""
+    # """Control si existe el email indicado"""
 
-    cur.execute('SELECT * FROM client WHERE name = "{0}"'.format(name)) #el profe lo hace de otra manera , ver 1:54 clase 8
-    row = cur.fetchone()
+    # cur.execute('SELECT * FROM client WHERE name = "{0}"'.format(name)) #el profe lo hace de otra manera , ver 1:54 clase 8
+    # row = cur.fetchone()
 
-    if row:
-        return jsonify({"message": "email ya registrado"})
+    # if row:
+    #     return jsonify({"message": "email ya registrado"})
 
     """ acceso a BD -> INSERT INTO """
     
@@ -398,6 +399,7 @@ def get_all_clients_by_user_id(id_user):
     for row in data:
         objClient = Client(row)
         ClientList.append(objClient.to_json())
+        print(row)
     return jsonify(ClientList)
 
 
