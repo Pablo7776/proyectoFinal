@@ -139,7 +139,13 @@ def index():
     #print(data)
     return render_template('index.html', contacts = data)
 
+@app.route('/agregarCliente.html')
+def agregar_nuevo_cliente():
+    return render_template('agregarCliente.html')
 
+@app.route('/mostrarListaClientes.html')
+def mostrarListaClientes():
+    return render_template('mostrarListaClientes.html')
 
 
 def client_resource(func): #chequeo!!!
@@ -305,13 +311,7 @@ def create_cliente():
 
 
     cur = mysql.connection.cursor()
-    # """Control si existe el email indicado"""
-
-    # cur.execute('SELECT * FROM client WHERE name = "{0}"'.format(name)) #el profe lo hace de otra manera , ver 1:54 clase 8
-    # row = cur.fetchone()
-
-    # if row:
-    #     return jsonify({"message": "email ya registrado"})
+ 
 
     """ acceso a BD -> INSERT INTO """
     
