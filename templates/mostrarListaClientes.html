@@ -5,74 +5,189 @@
 <table class="table table-hover">
     <thead>
       <tr>
-        <th scope="col">Type</th>
-        <th scope="col">Column heading</th>
-        <th scope="col">Column heading</th>
-        <th scope="col">Column heading</th>
+        <th scope="col">ID</th>
+        <th scope="col">NOMBRE</th>
+        <th scope="col">ID USUARIO</th>
+        <th scope="col">ACCIONES</th>
       </tr>
     </thead>
-    <tbody>
-      <tr class="table-active">
-        <th scope="row">Active</th>
-        <td>Column content</td>
-        <td>Column content</td>
-        <td>Column content</td>
-      </tr>
-      <tr>
-        <th scope="row">Default</th>
-        <td>Column content</td>
-        <td>Column content</td>
-        <td>Column content</td>
-      </tr>
-      <tr class="table-primary">
-        <th scope="row">Primary</th>
-        <td>Column content</td>
-        <td>Column content</td>
-        <td>Column content</td>
-      </tr>
-      <tr class="table-secondary">
-        <th scope="row">Secondary</th>
-        <td>Column content</td>
-        <td>Column content</td>
-        <td>Column content</td>
-      </tr>
-      <tr class="table-success">
-        <th scope="row">Success</th>
-        <td>Column content</td>
-        <td>Column content</td>
-        <td>Column content</td>
-      </tr>
-      <tr class="table-danger">
-        <th scope="row">Danger</th>
-        <td>Column content</td>
-        <td>Column content</td>
-        <td>Column content</td>
-      </tr>
-      <tr class="table-warning">
-        <th scope="row">Warning</th>
-        <td>Column content</td>
-        <td>Column content</td>
-        <td>Column content</td>
-      </tr>
-      <tr class="table-info">
-        <th scope="row">Info</th>
-        <td>Column content</td>
-        <td>Column content</td>
-        <td>Column content</td>
-      </tr>
-      <tr class="table-light">
-        <th scope="row">Light</th>
-        <td>Column content</td>
-        <td>Column content</td>
-        <td>Column content</td>
-      </tr>
-      <tr class="table-dark">
-        <th scope="row">Dark</th>
-        <td>Column content</td>
-        <td>Column content</td>
-        <td>Column content</td>
-      </tr>
+    <tbody id="all-persons">
+
     </tbody>
-  </table>
+</table>
+
+  <!-- cartel pop up !!!!
+  https://getbootstrap.com/docs/5.3/components/modal/
+  -->
+  <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="exampleModalLabel">Modificar Usuario </h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form>
+            <div class="mb-3">
+              <label for="recipient-name" class="col-form-label">Nombre:</label>
+              <input type="text" class="form-control" id="recipient-name" nombre="nombre">
+            </div>
+            <div class="mb-3">
+              <label for="message-text" class="col-form-label">Message:</label>
+              <textarea class="form-control" id="message-text"></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" onclick="guardar()" data-bs-dismiss="modal">Guardar</button> 
+        </div>
+      </div>
+    </div>
+  </div>
+    <!-- fin del cartel pop up !!!! -->
+
+
+<script>
+    window.onload = function(){
+        const token = localStorage.getItem('token');
+        if(token){
+            const username = localStorage.getItem('username');
+            const id = localStorage.getItem('id');
+            // document.getElementById("username").innerHTML = username;
+        }
+        else{
+            window.location.href = "login.html";
+        }
+}
+
+
+
+function cargarClientes(){
+
+    const id = localStorage.getItem('id');
+    const token = localStorage.getItem('token');
+    // console.log('User ID:', id);
+
+    const requestOptions = {
+        method : 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-access-token' : token,
+            'user-id' : id,
+
+        }
+    }
+
+    fetch( `http://127.0.0.1:4500/user/${id}/client`, requestOptions)
+    .then(
+        resp => {return resp.json()}
+    )
+
+    .then(
+            (resp) => {
+                console.log(resp)
+                const tableBody = document.getElementById('all-persons')
+                
+                let list = ``;
+                resp.forEach(person => {
+                    let fila = `<tr id="${person.id}">  
+                                <td> ${person.id} </td>
+                                <td> ${person.name}</td>
+                                <td> ${person.id_user}</td>
+
+                                <td>
+                                    <button  onclick="editar(${person.id})" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal" data-bs-whatever="@fat">Editar</button>
+                                    <button onclick="eliminar(${person.id})" type="button" class="btn btn-danger">Eliminar</button>
+                                </td>
+                            </tr>` //solo usar estas comillas!!
+                            list += fila;
+                });
+                tableBody.innerHTML = list;
+            }
+        )
+    .catch( (error) => { console.log("Promesa rechazada por" , error)})
+    .finally( () => { 
+        console.log("Promesa finalizada (resuelta o rechazada)")
+        //stopLoading()
+    })
+
+
+
+}
+
+window.onload = cargarClientes;
+
+
+function eliminar(id){
+
+
+    // const id = localStorage.getItem('id');
+    const token = localStorage.getItem('token');
+    // console.log('User ID:', id);
+
+    const requestOptions = {
+        method : 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-access-token' : token,
+            // 'user-id' : id,
+
+        }
+    }
+
+    fetch( `http://127.0.0.1:4500/borrar_cliente/${id}`, requestOptions)
+    .then(resp => {
+                if (resp.ok) {
+                    // Eliminación exitosa, podrías recargar la lista de clientes o realizar otras acciones necesarias.
+                    cargarClientes();
+                } else {
+                    console.log("Error al intentar eliminar el elemento");
+                }
+            })
+            .catch((error) => {
+                console.log("Error de red:", error);
+            });
+            }
+
+
+        let idEditar; // Variable global para almacenar el ID que se va a editar
+
+        function editar(id) {
+            idEditar = id; // Almacena el ID que se va a editar
+            const row = document.getElementById(id);
+            const nombre = row.children[1].textContent;
+            document.getElementById('recipient-name').value = nombre;
+        }
+
+        function guardar() {
+        const nuevoNombre = document.getElementById('recipient-name').value;
+        const token = localStorage.getItem('token');
+
+    if (idEditar !== undefined) {
+        const requestOptions = {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-access-token': token,
+            },
+            body: JSON.stringify({
+                name: nuevoNombre,
+            }),
+        };
+
+        fetch(`http://127.0.0.1:4500/client/${idEditar}`, requestOptions)
+            .then(resp => resp.json())
+            .then(data => {
+                console.log("Cliente actualizado:", data);
+                cargarClientes();
+
+            })
+            .catch(error => {
+                console.error("Error al actualizar el cliente:", error);
+            });
+    }
+        }
+</script>
 
 {% endblock %}

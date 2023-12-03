@@ -201,12 +201,12 @@ def agregar_cliente():
 
 
 @app.route('/borrar/<string:id>')
-def borrar_cliente(id):
+def borrar_cliente2(id):
     cur = mysql.connection.cursor()
     cur.execute('DELETE FROM client WHERE id = {0}'.format(id))
     mysql.connection.commit()
-    flash('Cliente borrado')
-    return redirect(url_for('index'))
+    # flash('Cliente borrado')
+    # return redirect(url_for('index'))
 
 @app.route('/editar/<id>')
 def get_cliente(id):
@@ -362,13 +362,22 @@ def uptate_cliente(id):
     mysql.connection.commit()
     return jsonify({ "id":id, "name": name})
 
-@app.route('/persons/<int:id>', methods = ['DELETE']) # Esto es un borrado físico, buscar el borrado lógico
+@app.route('/borrar_cliente/<int:id>', methods = ['DELETE']) # Esto es un borrado físico, buscar el borrado lógico
+@token_required #el que se identifica es el que generó el token
+# @user_resources #si me identifico como usuario 5 no puedo acceder a la rura de otro usuario
+# @client_resource #controla que <int:id_client> sea propiedad de <int:id>
 def remove_person(id):
     """ DELETE FROM WHERE... """
+    print(f"Delete request received for ID: {id}")
     cur = mysql.connection.cursor()
-    cur.execute('DELETE FROM person WHERE id = {0}'.format(id))
-    mysql.connection.commit()
-    return jsonify({"message": "deleted", "id":id})
+    try:
+        cur.execute('DELETE FROM client WHERE id = {0}'.format(id))
+        mysql.connection.commit()
+        print(f"Delete successful for ID: {id}")
+        return jsonify({"message": "deleted", "id": id}), 200
+    except Exception as e:
+        print(f"Error deleting record with ID {id}: {str(e)}")
+        return jsonify({"message": "error", "error": str(e)}), 500
 
 
 #@app.route('/client/<int:id>', methods = ['GET'])
