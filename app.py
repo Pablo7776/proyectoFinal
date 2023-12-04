@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, redirect, send_from_directory, render_template, url_for, session, flash
+from flask import Flask, jsonify, request, redirect, send_from_directory , url_for, session, flash
 
 from flask_mysqldb import MySQL
 from person import Person
@@ -10,7 +10,7 @@ from flask_cors import CORS
 from os import urandom
 
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='templates', static_url_path='')
 CORS(app)
 
 
@@ -91,10 +91,10 @@ def home():
     # El usuario está autenticado, redirige a la página principal
     return redirect(url_for('index'))
 
-# Ruta para el login
+#Ruta para el login
 @app.route('/login', methods=['GET'])
 def login():
-    return render_template('login.html')
+    return send_from_directory(app.static_folder, 'login.html')
 
 
 @app.route('/process_login', methods = ['POST'])
@@ -131,21 +131,34 @@ def process_login():
 
 
 @app.route('/index')
-@token_required #el que se identifica es el que generó el token
+@token_required
 def index():
     cur = mysql.connection.cursor()
     cur.execute('SELECT * FROM client')
     data = cur.fetchall()
-    #print(data)
-    return render_template('index.html', contacts = data)
+
+#   # Almacena los datos en la sesión
+#     session['contacts'] = data
+
+    # Redirigir a la página index.html
+    return redirect(url_for('show_index_page'))
+
+@app.route('/show_index_page')
+def show_index_page():
+        # Recupera los datos de la sesión
+    # contacts = session.get('contacts', [])
+    # print(contacts)
+
+    # Aquí puedes agregar la lógica necesaria antes de renderizar la página
+    return send_from_directory(app.static_folder, 'index.html')
 
 @app.route('/agregarCliente.html')
 def agregar_nuevo_cliente():
-    return render_template('agregarCliente.html')
+    return send_from_directory(app.static_folder, 'agregarCliente.html')
 
 @app.route('/mostrarListaClientes.html')
 def mostrarListaClientes():
-    return render_template('mostrarListaClientes.html')
+    return send_from_directory(app.static_folder, 'mostrarListaClientes.html')
 
 
 def client_resource(func): #chequeo!!!
@@ -214,27 +227,24 @@ def get_cliente(id):
     cur.execute('SELECT * FROM client WHERE id = %s', (id,))
     data = cur.fetchall()
     print(data[0])
-    return render_template('editar-contactos.html', contact = data[0])
+    return send_from_directory(app.static_folder, 'editar-contactos.html')
 
 
-@app.route('/update/<id>', methods = ['POST'])
-def update_contact(id):
-    if request.method == 'POST':
-        nombre = request.form['nombre']
-        usuario = request.form['usuario']
-        cur = mysql.connection.cursor()
-        cur.execute("""
-            UPDATE client
-            SET name = %s,
-                id_user = %s
-            WHERE id = %s
-        """, (nombre, usuario, id))
-        mysql.connection.commit()
-        flash('contacto actualizado')
-        return redirect(url_for('index'))
-
-
-
+# @app.route('/update/<id>', methods = ['POST'])
+# def update_contact(id):
+#     if request.method == 'POST':
+#         nombre = request.form['nombre']
+#         usuario = request.form['usuario']
+#         cur = mysql.connection.cursor()
+#         cur.execute("""
+#             UPDATE client
+#             SET name = %s,
+#                 id_user = %s
+#             WHERE id = %s
+#         """, (nombre, usuario, id))
+#         mysql.connection.commit()
+#         flash('contacto actualizado')
+#         return redirect(url_for('index'))
 
 
 
@@ -259,49 +269,52 @@ def update_contact(id):
 
 
 
-@app.route('/persons', methods = ['GET'])
-def get_all_persons():
-    cur = mysql.connection.cursor()
-    cur.execute('SELECT * FROM person')
-    data = cur.fetchall()
-    print(cur.rowcount)
-    print(data)
 
-    personList = []
-    for row in data:
-        objPerson = Person(row)
-        personList.append(objPerson.to_json())
-    return jsonify(personList)
 
-""" @app.post('/persons') """
-@app.route('/persons', methods = ['POST'])
-def create_person():
-    name = request.get_json()["name"]
-    surname = request.get_json()["surname"]
-    dni = request.get_json()["dni"]
-    email = request.get_json()["email"]
 
-    cur = mysql.connection.cursor()
-    """Control si existe el email indicado"""
+# @app.route('/persons', methods = ['GET'])
+# def get_all_persons():
+#     cur = mysql.connection.cursor()
+#     cur.execute('SELECT * FROM person')
+#     data = cur.fetchall()
+#     print(cur.rowcount)
+#     print(data)
 
-    cur.execute('SELECT * FROM person WHERE email = "{0}"'.format(email)) #el profe lo hace de otra manera , ver 1:54 clase 8
-    row = cur.fetchone()
+#     personList = []
+#     for row in data:
+#         objPerson = Person(row)
+#         personList.append(objPerson.to_json())
+#     return jsonify(personList)
 
-    if row:
-        return jsonify({"message": "email ya registrado"})
+# """ @app.post('/persons') """
+# @app.route('/persons', methods = ['POST'])
+# def create_person():
+#     name = request.get_json()["name"]
+#     surname = request.get_json()["surname"]
+#     dni = request.get_json()["dni"]
+#     email = request.get_json()["email"]
 
-    """ acceso a BD -> INSERT INTO """
+#     cur = mysql.connection.cursor()
+#     """Control si existe el email indicado"""
+
+#     cur.execute('SELECT * FROM person WHERE email = "{0}"'.format(email)) #el profe lo hace de otra manera , ver 1:54 clase 8
+#     row = cur.fetchone()
+
+#     if row:
+#         return jsonify({"message": "email ya registrado"})
+
+#     """ acceso a BD -> INSERT INTO """
     
-    cur.execute("INSERT INTO person (name, surname, dni, email) VALUES (%s,%s,%s,%s)", (name, surname, dni, email))
-    mysql.connection.commit()
+#     cur.execute("INSERT INTO person (name, surname, dni, email) VALUES (%s,%s,%s,%s)", (name, surname, dni, email))
+#     mysql.connection.commit()
 
-    """ obtener el id del registro creado"""
-    cur.execute('SELECT LAST_INSERT_ID()')
-    row = cur.fetchone()
-    print(row[0])
-    id = row[0]
+#     """ obtener el id del registro creado"""
+#     cur.execute('SELECT LAST_INSERT_ID()')
+#     row = cur.fetchone()
+#     print(row[0])
+#     id = row[0]
 
-    return jsonify({"name": name, "surname": surname, "dni": dni, "email": email, "id": id })
+#     return jsonify({"name": name, "surname": surname, "dni": dni, "email": email, "id": id })
 
 
 @app.route('/cliente', methods = ['POST'])
@@ -328,29 +341,29 @@ def create_cliente():
 
 
 
-@app.route('/persons/<int:id>', methods = ['GET'])
-def get_person_by_id(id):
-    cur = mysql.connection.cursor()
-    cur.execute('SELECT * FROM person WHERE id = {0}'.format(id))
-    data = cur.fetchall()
-    print(cur.rowcount)
-    print(data)
-    if cur.rowcount > 0:
-        objPerson = Person(data[0])
-        return jsonify(objPerson.to_json())
-    return jsonify({"message": "id not found"})
+# @app.route('/persons/<int:id>', methods = ['GET'])
+# def get_person_by_id(id):
+#     cur = mysql.connection.cursor()
+#     cur.execute('SELECT * FROM person WHERE id = {0}'.format(id))
+#     data = cur.fetchall()
+#     print(cur.rowcount)
+#     print(data)
+#     if cur.rowcount > 0:
+#         objPerson = Person(data[0])
+#         return jsonify(objPerson.to_json())
+#     return jsonify({"message": "id not found"})
 
-@app.route('/person/<int:id>', methods = ['PUT'])
-def uptate_person(id):
-    name = request.get_json()["name"]
-    surname = request.get_json()["surname"] 
-    dni = request.get_json()["dni"]
-    email = request.get_json()["email"]
-    """ UPDATE SET ... WHERE ... """
-    cur = mysql.connection.cursor()
-    cur.execute('UPDATE person SET name = %s, surname = %s, dni = %s, email = %s WHERE id = %s', (name, surname, dni, email, id))
-    mysql.connection.commit()
-    return jsonify({ "id":id, "name": name, "surname": surname, "dni": dni, "email": email})
+# @app.route('/person/<int:id>', methods = ['PUT'])
+# def uptate_person(id):
+#     name = request.get_json()["name"]
+#     surname = request.get_json()["surname"] 
+#     dni = request.get_json()["dni"]
+#     email = request.get_json()["email"]
+#     """ UPDATE SET ... WHERE ... """
+#     cur = mysql.connection.cursor()
+#     cur.execute('UPDATE person SET name = %s, surname = %s, dni = %s, email = %s WHERE id = %s', (name, surname, dni, email, id))
+#     mysql.connection.commit()
+#     return jsonify({ "id":id, "name": name, "surname": surname, "dni": dni, "email": email})
 
 
 @app.route('/client/<int:id>', methods = ['PUT'])
@@ -380,21 +393,21 @@ def remove_person(id):
         return jsonify({"message": "error", "error": str(e)}), 500
 
 
-#@app.route('/client/<int:id>', methods = ['GET'])
-@app.route('/user/<int:id>/client/<int:id_client>', methods = ['GET']) #para identificar a un cliente primero tengo que tener a su usuario
-@token_required #el que se identifica es el que generó el token
-@user_resources #si me identifico como usuario 5 no puedo acceder a la rura de otro usuario
-@client_resource #controla que <int:id_client> sea propiedad de <int:id>
-def get_client_by_id(id_client):
-    cur = mysql.connection.cursor()
-    cur.execute('SELECT * FROM client WHERE id = {0}'.format(id_client))
-    data = cur.fetchall()
-    print(cur.rowcount)
-    print(data)
-    if cur.rowcount > 0:
-        objClient = Client(data[0])
-        return jsonify(objClient.to_json())
-    return jsonify({"message": "id not found"}), 404
+# #@app.route('/client/<int:id>', methods = ['GET'])
+# @app.route('/user/<int:id>/client/<int:id_client>', methods = ['GET']) #para identificar a un cliente primero tengo que tener a su usuario
+# @token_required #el que se identifica es el que generó el token
+# @user_resources #si me identifico como usuario 5 no puedo acceder a la rura de otro usuario
+# @client_resource #controla que <int:id_client> sea propiedad de <int:id>
+# def get_client_by_id(id_client):
+#     cur = mysql.connection.cursor()
+#     cur.execute('SELECT * FROM client WHERE id = {0}'.format(id_client))
+#     data = cur.fetchall()
+#     print(cur.rowcount)
+#     print(data)
+#     if cur.rowcount > 0:
+#         objClient = Client(data[0])
+#         return jsonify(objClient.to_json())
+#     return jsonify({"message": "id not found"}), 404
 
 
 @app.route('/user/<int:id_user>/client', methods = ['GET'])
