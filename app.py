@@ -3,6 +3,7 @@ from flask import Flask, jsonify, request, redirect, send_from_directory , url_f
 from flask_mysqldb import MySQL
 from person import Person
 from client import Client
+from producto import Producto
 import jwt
 import datetime
 from functools import wraps
@@ -429,6 +430,152 @@ def get_all_clients_by_user_id(id_user):
 
 
 
+###################################################
+
+@app.route('/crear_producto', methods = ['POST'])
+def create_producto():
+    
+    producto = request.get_json()["producto"]
+    cantidad = request.get_json()["cantidad"]
+    precio = request.get_json()["precio"]
+    id_user = request.get_json()["id_user"]
+
+
+
+    cur = mysql.connection.cursor()
+ 
+
+    """ acceso a BD -> INSERT INTO """
+    
+    cur.execute("INSERT INTO productos ( producto, cantidad, precio, id_user ) VALUES ( %s, %s, %s, %s)", ( producto, cantidad, precio, id_user))
+    mysql.connection.commit()
+
+    """ obtener el id del registro creado"""
+    cur.execute('SELECT LAST_INSERT_ID()')
+    row = cur.fetchone()
+    print(row[0])
+    id = row[0]
+
+    return jsonify({"name": producto, "cantidad": cantidad , "precio": precio})
+
+
+@app.route('/borrar_producto/<int:id>', methods = ['DELETE']) # Esto es un borrado físico, buscar el borrado lógico
+@token_required #el que se identifica es el que generó el token
+# @user_resources #si me identifico como usuario 5 no puedo acceder a la rura de otro usuario
+# @client_resource #controla que <int:id_client> sea propiedad de <int:id>
+def remove_person(id):
+    """ DELETE FROM WHERE... """
+    print(f"Delete request received for ID: {id}")
+    cur = mysql.connection.cursor()
+    try:
+        cur.execute('DELETE FROM producto WHERE id = {0}'.format(id))
+        mysql.connection.commit()
+        print(f"Delete successful for ID: {id}")
+        return jsonify({"message": "deleted", "id": id}), 200
+    except Exception as e:
+        print(f"Error deleting record with ID {id}: {str(e)}")
+        return jsonify({"message": "error", "error": str(e)}), 500
+    
+@app.route('/producto/<int:id>', methods = ['PUT'])
+def uptate_cliente(id):
+    producto = request.get_json()["producto"]
+    cantidad = request.get_json()["cantidad"]
+    precio = request.get_json()["precio"]
+    """ UPDATE SET ... WHERE ... """
+    cur = mysql.connection.cursor()
+    cur.execute('UPDATE producto SET producto = %s, cantidad = %s, precio = %s WHERE id = %s', (producto, cantidad, precio ,id))
+    mysql.connection.commit()
+    return jsonify({ "id":id, "name": producto})
+
+
+
+@app.route('/user/<int:id_user>/producto', methods = ['GET'])
+@token_required
+@user_resources # voy a poder ver a los clientes del usuaro 5 si ya tengo el token y me identifico como usuario 5
+def get_all_clients_by_user_id(id_user):
+    cur = mysql.connection.cursor()
+    cur.execute('SELECT * FROM producto WHERE id_user = {0}'.format(id_user))
+    data = cur.fetchall()
+    ProductoList = []
+    for row in data:
+        objClient = Client(row)
+        ProductoList.append(objClient.to_json())
+        print(row)
+    return jsonify(ProductoList)
+
+
+######################################################
+
+
+
+
+@app.route('/crear_servicio', methods = ['POST'])
+@token_required
+@user_resources
+def create_producto():
+    
+    servicio = request.get_json()["servicio"]
+    precio = request.get_json()["precio"]
+    id_user = request.get_json()["id_user"]
+
+
+
+    cur = mysql.connection.cursor()
+ 
+
+    """ acceso a BD -> INSERT INTO """
+    
+    cur.execute("INSERT INTO servicios ( servicio, precio, id_user ) VALUES ( %s, %s, %s)", ( servicio, precio, id_user))
+    mysql.connection.commit()
+
+    """ obtener el id del registro creado"""
+    cur.execute('SELECT LAST_INSERT_ID()')
+    row = cur.fetchone()
+    print(row[0])
+    id = row[0]
+
+    return jsonify({"name": servicio, "precio": precio })
+
+
+
+@app.route('/borrar_servicio/<int:id>', methods = ['DELETE']) # Esto es un borrado físico, buscar el borrado lógico
+@token_required #el que se identifica es el que generó el token
+# @user_resources #si me identifico como usuario 5 no puedo acceder a la rura de otro usuario
+# @client_resource #controla que <int:id_client> sea propiedad de <int:id>
+def remove_person(id):
+    """ DELETE FROM WHERE... """
+    print(f"Delete request received for ID: {id}")
+    cur = mysql.connection.cursor()
+    try:
+        cur.execute('DELETE FROM servicios WHERE id = {0}'.format(id))
+        mysql.connection.commit()
+        print(f"Delete successful for ID: {id}")
+        return jsonify({"message": "deleted", "id": id}), 200
+    except Exception as e:
+        print(f"Error deleting record with ID {id}: {str(e)}")
+        return jsonify({"message": "error", "error": str(e)}), 500
+    
+
+@app.route('/servicios/<int:id>', methods = ['PUT'])
+@token_required
+@user_resources
+def uptate_cliente(id):
+    servicio = request.get_json()["producto"]
+    precio = request.get_json()["precio"]
+    """ UPDATE SET ... WHERE ... """
+    cur = mysql.connection.cursor()
+    cur.execute('UPDATE productos SET servicio = %s, precio = %s WHERE id = %s', (servicio, precio ,id))
+    mysql.connection.commit()
+    return jsonify({ "id":id, "name": servicio})
+
+
+
+
+
+
+
+
+
 
 
 
@@ -441,9 +588,81 @@ if __name__ == '__main__':
 
 
 
+@app.route('/user/<int:id_user>/servicios', methods = ['GET'])
+@token_required
+@user_resources # voy a poder ver a los clientes del usuaro 5 si ya tengo el token y me identifico como usuario 5
+def get_all_clients_by_user_id(id_user):
+    cur = mysql.connection.cursor()
+    cur.execute('SELECT * FROM servicios WHERE id_user = {0}'.format(id_user))
+    data = cur.fetchall()
+    ServiciosList = []
+    for row in data:
+        objClient = Client(row)
+        ServiciosList.append(objClient.to_json())
+        print(row)
+    return jsonify(ServiciosList)
+
+
+###################################################
+
+
+from flask import request, jsonify
+@token_required
+@user_resources
+@app.route('/crear_factura', methods=['POST'])
+def create_factura():
+    data = request.get_json()
+
+    if 'cliente_id' in data and 'items' in data:
+        return create_factura_internal(data)
+    else:
+        return jsonify({"message": "Solicitud no válida"}), 400
+
+def create_factura_internal(data):
+    cliente_id = data["cliente_id"]
+    items = data["items"]
+
+    cur = mysql.connection.cursor()
+
+    # Crear factura
+    cur.execute("INSERT INTO factura (cliente_id) VALUES (%s)", (cliente_id,))
+    mysql.connection.commit()
+
+    # Obtener el ID de la factura recién creada
+    cur.execute('SELECT LAST_INSERT_ID()')
+    row = cur.fetchone()
+    factura_id = row[0]
+
+    # Agregar productos y servicios a la factura
+    for item in items:
+        if item["tipo"] == "producto":
+            cur.execute("INSERT INTO factura_item (factura_id, tipo, producto_id, cantidad) VALUES (%s, %s, %s, %s)", (factura_id, item["tipo"], item["id"], item["cantidad"]))
+        elif item["tipo"] == "servicio":
+            cur.execute("INSERT INTO factura_item (factura_id, tipo, servicio_id, cantidad) VALUES (%s, %s, %s, %s)", (factura_id, item["tipo"], item["id"], item["cantidad"]))
+        mysql.connection.commit()
+
+    return jsonify({"factura_id": factura_id, "cliente_id": cliente_id, "items": items})
 
 
 
+@app.route('/user/<int:id_user>/facturas', methods=['GET'])
+@token_required
+@user_resources
+def get_all_facturas_by_user_id(id_user):
+    cur = mysql.connection.cursor()
+    cur.execute('SELECT * FROM factura WHERE cliente_id = %s', (id_user,))
+    data = cur.fetchall()
+
+    facturas_list = []
+    for row in data:
+        factura = {
+            "factura_id": row[0],
+            "cliente_id": row[1],
+            # Agrega más propiedades según la estructura de tu tabla factura
+        }
+        facturas_list.append(factura)
+
+    return jsonify({"facturas": facturas_list})
 
 
 
